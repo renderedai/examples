@@ -139,7 +139,7 @@ Instead of training the FAN Tiny backbone on synthetic data and real data in sep
 ### The Results
 | <img src="result_merge.png" width="460"> |
 | :--: | 
-| *Classification Accuracy Versus Amount of Real Data. X-Axis is the Portion of the Real Dataset; Text Annotations are the Percentage of the Training Set That Is Real Data.* |
+| *Classification Accuracy Versus Amount of Real Data. All Models Trained with 4000 Synthetic Images and a Percentage of 2429 Real Images.* |
 <!--| *Synthetic Data Validation - Less Than Half of the Real Data is Needed to Achieve Classification Accuracy* | -->
 
 Engineers found that only 20% of Kaggle’s real dataset was required when combined with synthetic data to achieve comparable performance as the full real dataset alone. Model performance topped out at 91% F1 Score using a merged dataset, compared to the model performance of 87% accuracy reported in the published Kaggle* notebook. 
