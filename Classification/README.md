@@ -1,7 +1,7 @@
 # End-to-End Training of a Classification Model with Synthetic Data
 Training a classification model to identify new ship types in marine oblique scenes.
 
-<b>Recreate this example yourself with a free trial to the Rendered.ai Platform, using content code: _______ to access a workspace pre-loaded with a test dataset, synthetic data generation workflows, and a classification model. Visit [www.rendered.ai](https://www.rendered.ai/free-trial) to get started.</b>
+<b>Recreate this example yourself with a free trial to the Rendered.ai Platform, using content code: *MARINECLASS* to access a workspace pre-loaded with a test dataset, synthetic data generation workflows, and a classification model. Visit [www.rendered.ai](https://www.rendered.ai/free-trial) to get started.</b>
 
 ## Objectives 
 To demonstrate how the Rendered.ai Platform as a Service can be used to generate customized synthetic imagery data to train and test computer vision systems with:  
@@ -13,7 +13,9 @@ To demonstrate how the Rendered.ai Platform as a Service can be used to generate
 ## Test Dataset 
 The open source [Roboflow Ships](https://www.kaggle.com/datasets/vinayakshanawad/ships-dataset) image classification dataset from [Kaggle](https://www.kaggle.com). This real dataset is broken down into 10 classes:
 
-![Classes](TestDataset1.png)
+| ![Classes](TestDataset1.png) |
+| :--: |
+| *Population of Each Ship Class in Complete Real Dataset* |
 
 ## Model 
 NVIDIA TAO v5.5 with backbone pre-trained weights from the tiny Fully Attentional Network (FAN) model. Available in NVIDIA’s [NGC Catalog](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/pretrained_fan_classification_imagenet).
@@ -48,13 +50,13 @@ The classification models trained in this use case with a learning rate of 1x10^
 
 
 #### Balancing the Number of Epochs 
-To evaluate the amount of real data needed to achieve target model performance, engineers removed fractions of data from each class. This can cause overfitting if the real dataset is large. To model a ballpark number of epochs for a given dataset size, the engineers estimated an appropriate number of epochs for a few datasets of disparaging sizes. Specifically, they fixed the learning rate to 1x10^-4 and then found the best model accuracy for various number of epochs.
+To evaluate the amount of real data needed to achieve target model performance, engineers removed fractions of data from each class. This can cause overfitting if the real dataset is large. To model a ballpark number of epochs for a given dataset size, the engineers estimated an appropriate number of epochs for a few datasets of disparaging sizes. Specifically, they fixed the learning rate to 1x10^-4 and then found the best model accuracy for various epochs.
 
 #### Determining Baseline Measurement
 Using this model for a balanced number of epochs and fixed learning rate, engineers trained on fractions of the real data. The accuracy remained in the upper 80th percentile for all fractions above 40%. This indicated that too much 
 training data was already being used. This determined a baseline measurement by which they could determine how much synthetic data would be effective. 
 
-| ![Performance on Fractions](Baseline5.png) |
+| <img src="result_baseline.png" width="460">  |
 | :--: |
 | *Classification Accuracy for Various Amounts of Real Data* |
 
@@ -100,7 +102,7 @@ With the mapping file in place, engineers can train classification models on syn
 
 | ![Confusion Matrix](ConfMat-InitialSD.png) |
 | :--: |
-| *Real Test Confusion Matrix for a Classification Model Trained on Initiial Synthetic Data* |
+| *Real Test Confusion Matrix for a Classification Model Trained on Initial Synthetic Data* |
 
 This told the engineers that the synthetic dataset needed to be modified to increase the representation of other object classes to improve overall model performance. 
 
@@ -117,25 +119,30 @@ Additional expertise was required to increase the quality of the lowest performi
 Looking at the confusion matrix we see the updates improved all the classes of concern.
 
 ### 5. Synthetic Validation
-To validate the synthetic data will be useful for training a ship classification model, we evalite performance of models trained on combinations of synthetic and real data.
+To ensure the synthetic data will be useful for training a ship classification model, we evaluate the performance of models trained on combinations of synthetic and real data.
 
-#### Model Finetuning
-With the backbone having a good chance of detecting all classes of interest, fewer real samples should have now been needed to optimize model performance. Rendered.ai’s engineers however found that training the zero-shot model as a pretrained backbone with the same learning rate and epoch counts on synthetic data and then the real Kaggle Ships Image Dataset did not improve model performance. Fine-tuning the model with the hyper-parameters used for the real data (a fixed learning rate with balanced number of epochs) resulted in little to no improvement of the classification accuracy over the baseline.
+#### Fine-tuning Approach
+With the backbone having a good chance of detecting all classes of interest, fewer real samples should have now been needed to optimize model performance. Rendered.ai’s engineers however found that training the zero-shot model as a pre-trained backbone with the same learning rate and epoch counts on synthetic data and then the real Kaggle Ships Image Dataset did not improve model performance. Fine-tuning the model with the hyper-parameters used for the real data (a fixed learning rate with balanced number of epochs) resulted in little to no improvement of the classification accuracy over the baseline.
 
-![](Testing1.png)
+| <img src="result_finetune.png" width="460"> |
+| :--: |
+| *Classification Accuracy Versus Amount of Real Data. Fine-tuning Results Show Pretrained Weights Are Wiped Out.* |
 
-Rendered.ai’s engineers hypothesized this occurred because it had wiped out the pretrained weights. The hyper-parameters could be adjusted for a lower learning rate to correct this, but it would require more epochs to achieve convergence and would extend training time significantly. 
+Rendered.ai’s engineers hypothesized this occurred because it had wiped out the pretrained weights. The hyper-parameters could be adjusted for a lower learning rate to correct this, but it would require more epochs to achieve convergence and would extend training time significantly.
 
 
-#### The Solution
+#### Merge Approach
 
 Instead of training the FAN Tiny backbone on synthetic data and real data in separate cycles, engineers tested merging the datasets together to train the FAN Tiny backbone directly. Larger training datasets (between 4,500 and 7,000 samples) with fewer epochs (50 and 100 epochs) were used, resulting in a clear indication that far less real data was required to optimize model performance. 
 
 
 ### The Results
-![Results](Results1.png)
+| <img src="result_merge.png" width="460"> |
+| :--: | 
+| *Classification Accuracy Versus Amount of Real Data. X-Axis is the Portion of the Real Dataset; Text Annotations are the Percentage of the Training Set That Is Real Data.* |
+<!--| *Synthetic Data Validation - Less Than Half of the Real Data is Needed to Achieve Classification Accuracy* | -->
 
-Engineers found that only 10% of Kaggle’s real dataset was required when combined with synthetic data to achieve the same, if not better, performance as the real dataset. Model performance topped out at 94% accuracy using a merged dataset of only 60% of the real dataset from Kaggle and 40% of customized synthetic data generated in the Rendered.ai platform, compared to the model performance of 87% accuracy reported by Kaggle* with the real data alone. 
+Engineers found that only 20% of Kaggle’s real dataset was required when combined with synthetic data to achieve comparable performance as the full real dataset alone. Model performance topped out at 91% F1 Score using a merged dataset, compared to the model performance of 87% accuracy reported in the published Kaggle* notebook. 
 
 Kaggle Challenge, https://www.kaggle.com/code/nnghiapd/cnn-with-87-accuracy
 
@@ -148,6 +155,6 @@ With an open-sourced real test dataset, a standard computer vision model for thi
 The additional expertise of the Rendered.ai team and the ability to quickly iterate on synthetic data generation workflows in the Rendered.ai platform made it possible to train, experiment with, and arrive at a performant classification model in a matter of days.
 
 
-***Are you ready to experiment with synthetic data generation from this test case?*** [Start your free trial](https://rendered.ai/free-trial/) of the Rendered.ai Platform and use content code: ________ to explore the Marine Oblique Workspace preloaded with all of the assets used.
+***Are you ready to experiment with synthetic data generation from this test case?*** [Start your free trial](https://rendered.ai/free-trial/) of the Rendered.ai platform and use content code: *MARINECLASS* to explore a marine oblique workspace preloaded with all of the assets used here.
 
 ***Need help validating the effectiveness of synthetic data for a different use case?*** [Request a personalized consultation](https://rendered.ai/talk-to-sales/) with the experts at Rendered.ai. 
