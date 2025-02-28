@@ -26,24 +26,37 @@ The amount of data used to train a model is as important as the hyperparameters 
 
 To accelerate the development time for this example, engineers focused on four classes: aircraft carriers, sailboats, submarines, and tugboats. They first tuned the hyperparameters to train a model on the real “Roboflow Ships Image” data to perform like the reported accuracy on the Kaggle classification dataset. Engineers found that using the default learning rate and epoch number for the TAO PyTorch Classification Model Trainer provided poor accuracy. By experimenting with and analyzing the loss curves, they realized that the learning rate was too high. Lowering the starting learning rate to 1e-4 and cutting the epochs down to 50-100 resulted in a model with acceptable accuracy. Training the FAN Tiny backbone on 99% of the real dataset resulted in better accuracy in all classifications, except for the sailboat class. 
 
-![Confusion Matrix](Baseline1.png)
+| ![Confusion Matrix](ConfMat-Baseline.png) |
+| :--: |
+| *Real Test Confusion Matrix for the Baseline Model (Trained on Real Data)* |
 
-![Sample Images](Baseline2.png)
+From the datasets tab on Rendered.ai, the inference labels and prediction confidence scores can be seen. Here are examples of the real test dataset with inference details of the baseline model. 
 
-Another challenge was found in the loss estimated at each epoch during training. Engineers used a learning rate of 1E-4 and trained for 186 epochs. This resulted in a converged model at risk of overfitting. This exercise helped the engineers understand that using 125 epochs for this learning rate and amount of training data was sufficient.
+| <img src="BaselineInferenceSub.png" width="200">| <img src="BaselineInferenceSailboat.png" width="200"> |
+| <img src="BaselineInferenceTug.png " width="200"> | <img src="BaselineInferenceACC.png" width="200"> |
+| :--: | :--: |
+| *Baseline Inference Examples* ||
 
-![Training](Baseline3.png)
+
+The loss is estimated at each epoch during training. For larger training sets, the models tend to converge faster. Keep an eye on the loss curve to get a sense of how many epochs are needed for your experiment. This resulted in a converged model at risk of overfitting. 
+
+The classification models trained in this use case with a learning rate of 1x10^-4, where the number of samples varied between 2000 and 4000, we use between 50 and 2000 epochs. Using 100 epochs for this learning rate and amount of training data would be sufficient. 
+
+| ![Training](BaselineLoss.png) |
+| :--: |
+| *Validation loss curve for the complete real data training set, the “baseline” model.* |
 
 
 #### Balancing the Number of Epochs 
-To evaluate the amount of real data needed to achieve target model performance, engineers removed fractions of data from each class. This can cause overfitting if the real dataset is large. To model a ballpark number of epochs for a given dataset size, the engineers estimated an appropriate number of epochs for a few datasets of disparaging sizes. Specifically, they fixed the learning rate to 1x10^-4 and then found the best model accuracy for various number of epochs. The three values were then fit by linear regression for the model as shown in the chart below. 
-
-![Epochs vs. Samples](Baseline4.png)
+To evaluate the amount of real data needed to achieve target model performance, engineers removed fractions of data from each class. This can cause overfitting if the real dataset is large. To model a ballpark number of epochs for a given dataset size, the engineers estimated an appropriate number of epochs for a few datasets of disparaging sizes. Specifically, they fixed the learning rate to 1x10^-4 and then found the best model accuracy for various number of epochs.
 
 #### Determining Baseline Measurement
-Using this model for a balanced number of epochs and fixed learning rate, engineers trained on fractions of the real data. The accuracy remained in the upper 80th percentile for all fractions above 40%. This indicated that too much training data was already being used. 
+Using this model for a balanced number of epochs and fixed learning rate, engineers trained on fractions of the real data. The accuracy remained in the upper 80th percentile for all fractions above 40%. This indicated that too much 
+training data was already being used. This determined a baseline measurement by which they could determine how much synthetic data would be effective. 
 
-![Performance on Fractions](Baseline5.png)
+| ![Performance on Fractions](Baseline5.png) |
+| :--: |
+| *Classification Accuracy for Various Amounts of Real Data* |
 
 This determined a baseline measurement by which they could determine how much synthetic data would be effective.
 
@@ -53,44 +66,58 @@ In machine learning, “zero-shot” training refers to the absence of samples f
 #### Scenario Variation
 To match the scenario of the real dataset from Kaggle, ship placement, scene background (including sun placement), atmospheric conditions, camera location, and rotation were randomized using configurable workflows in the Rendered.ai platform, called “graphs”. 
 
-![Graph](SyntheticData1.png)
+| ![Graph](SyntheticData1.png) |
+| :--: |
+| *A portion of the graph built in the Rendered.ai platform showcasing ship placement through 3D models organized into directories with an equal representation of each class and ships placed at a distance and rotating, mimicking the real dataset.* |
 
 A variety of 3D assets representing samples for different classes shown in the following chart were loaded into the Rendered.ai platform and graph. 
 
-![Assets](SyntheticData2.png)
+| ![Assets](SyntheticData3.png) |
+| :--: |
+| *The portion of the Rendered.ai graph showing context configuration, including HDRI backgrounds rotated randomly, an ocean scene with fixed waves, and randomized mist in the atmosphere. *|
 
-![Assets](SyntheticData3.png)
-
-![Assets](SyntheticData4.png)
+| ![Assets](SyntheticData4.png) |
+| :--: |
+| *The portion of the Rendered.ai graph showing render and sensor configurations, including Object Classification CV Task Type and randomized camera positioning. *|
 
 Adjusting the distance from the camera within this graph enabled control of object resolution, from which the following images of aircraft carriers and tugboats were generated that looked similar to the real image samples from the Kaggle dataset. 
 
-![Assets](SyntheticData5.png)
+| ![Assets](RealTugs.png) |
+| ![Assets](SyntheticData5.png) |
+| :--: |
+| *Tugboat Samples - Top Shows Real Data; Bottom Shows Initial Synthetic Data* |
 
 ### 3. Training and Evaluating the Zero-Shot Model 
 
 ### Initial Experiment
-An experiment was designed to reproduce the curve seen in the baseline measurement using synthetic data instead of real data. The synthetic data training set used had 1,000 images for each class.
+An experiment was designed to reproduce the curve seen in the baseline measurement using synthetic data augmenting the real data. The synthetic data training set used had 1,000 images for each class. To match the individual ship models with specific classes for CV training, Rendered.ai uses a mapping file.
 
-![Class Map](ZeroShot1.png)
+| ![Class Map](ZeroShot1.png) |
+| :--: |
+| *Rendered.ai Mapping File For Ship Models* |
 
-By applying the learnings from determining a performance baseline with the TAO Classification model and using only the first set of synthesized data, engineers initially achieved a zero-shot performance of 51.3% with model bias caused by the aircraft carrier data. 
+With the mapping file in place, engineers can train classification models on synthetic data. Using the initial dataset, a zero-shot F1 Score was 45.15%. Looking at the confusion matrix we see the model is biased toward aircraft carriers. 
 
-![Confusion Matrix](ZeroShot2.png)
+| ![Confusion Matrix](ConfMat-InitialSD.png) |
+| :--: |
+| *Real Test Confusion Matrix for a Classification Model Trained on Initiial Synthetic Data* |
 
 This told the engineers that the synthetic dataset needed to be modified to increase the representation of other object classes to improve overall model performance. 
 
 ### 4. Analyzing Performance & Updating the Model 
 
-By comparing the failed classifications from the initial experiment to the synthetic training data, the engineers observed a few areas of opportunity to make quick parameter changes in the Rendered.ai graph and rapidly generate a new synthetic dataset. The graph was used to easily adjust attributes like camera focus, boat heave and movement, reduce blur, and add more 3D models of submarines with varying surface elements (e.g., rust, warp, snow) to create a more physically accurate and diverse set of synthetic imagery.
+By comparing the failed classifications from the initial experiment to the synthetic training data, the engineers observed a few areas of opportunity to make parameter changes in the Rendered.ai graph and immediately generate a new synthetic dataset. The graph was used to adjust attributes like distance to the camera for small ships, submarine heave, sailboat rotation, and add varying surface elements (e.g., rust, warp, snow) to create more physically accurate and diverse synthetic imagery.
 
-Additional expertise was required to increase the quality of the lowest performing classes of synthetic data: sailboats and tugboats. Rendered.ai’s team of engineers added higher-resolution samples of sailboats and tugboats to the Kaggle training datase, as well as additional sailboat models with varying masts and randomized heeling angles to improve the model’s classification accuracy. 
+Additional expertise was required to increase the quality of the lowest performing classes of synthetic data: sailboats. Rendered.ai uses various generative AI tools to add diversity to their simulations. The team used Trellis, a text to 3D model generation tool, to create a batch of new models with varying masts and hull shapes. The result of these updates lead to a zero-shot classification F1 Score of 61.32%, a good starting place to perform the synthetic validation analysis.
 
-![Confusion Matrix](Update1.png)
+| ![Confusion Matrix](ConfMat-UpdatedSD.png) |
+| :--: |
+| *Real Test Confusion Matrix for a Classification Model Trained on Updated Synthetic Data* |
 
-The updates engineers made to the Rendered.ai graph generated a new synthetic dataset that, when used alone, resulted in a satisfactory 65.49% zero-shot accuracy and improved all the classes of concern in a short period of time. 
+Looking at the confusion matrix we see the updates improved all the classes of concern.
 
-### 5. Testing Combinations of Synthetic and Real Data on Model Performance 
+### 5. Synthetic Validation
+To validate the synthetic data will be useful for training a ship classification model, we evalite performance of models trained on combinations of synthetic and real data.
 
 #### Model Finetuning
 With the backbone having a good chance of detecting all classes of interest, fewer real samples should have now been needed to optimize model performance. Rendered.ai’s engineers however found that training the zero-shot model as a pretrained backbone with the same learning rate and epoch counts on synthetic data and then the real Kaggle Ships Image Dataset did not improve model performance. Fine-tuning the model with the hyper-parameters used for the real data (a fixed learning rate with balanced number of epochs) resulted in little to no improvement of the classification accuracy over the baseline.
